@@ -2,14 +2,14 @@ import { DataTypes, Model } from 'sequelize';
 import sequelize from '../lib/database';
 
 class Procedure extends Model {
-  public id!: number;
-  public title!: string;
-  public description!: string;
-  public category!: string;
-  public filePath!: string;
-  public fileName!: string;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare id: number;
+  declare title: string;
+  declare description: string;
+  declare category: string;
+  declare filePath: string;
+  declare fileName: string;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Procedure.init(
