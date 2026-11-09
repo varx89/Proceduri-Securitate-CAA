@@ -36,8 +36,9 @@ yarn-error.log*
 next-env.d.ts
 
 
-# uploads
-/uploads
+# uploads (PDF-urile urcate din admin nu ajung niciodată în git)
+/uploads/
+/public/uploads/
 
 # IDE
 .vscode/
