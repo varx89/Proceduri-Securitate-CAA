@@ -1,6 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server';
+import { authCookieOptions } from '../../../../lib/auth';
 
 export async function POST() {
   const response = NextResponse.json(
@@ -10,10 +11,7 @@ export async function POST() {
 
   // Clear the auth cookie
   response.cookies.set('auth-token', '', {
-    httpOnly: true,
-    //secure: process.env.NODE_ENV === 'production',
-	secure: process.env.SECURE_LOGIN === "true",
-    sameSite: 'strict',
+    ...authCookieOptions,
     maxAge: 0,
   });
 

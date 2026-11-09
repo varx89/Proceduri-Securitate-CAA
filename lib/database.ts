@@ -1,14 +1,14 @@
 import { Sequelize } from 'sequelize';
 import mysql2 from 'mysql2';
 
-const databaseUrl = process.env.DATABASE_URL || 'mysql://root:@localhost:3306/proceduri';
-
 // Reuse the connection pool across hot reloads in development
-const globalForDb = globalThis as unknown as { sequelize?: Sequelize };
+const globalForDb = globalThis as unknown as { sequelize?: Sequelize; dbReady?: Promise<void> };
 
 const sequelize =
   globalForDb.sequelize ??
-  new Sequelize(databaseUrl, {
+  new Sequelize(process.env.DB_NAME ?? '', process.env.DB_USER ?? '', process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT) || 3306,
     dialect: 'mysql',
     dialectModule: mysql2,
     logging: false,
@@ -19,6 +19,18 @@ const sequelize =
     },
   });
 
-if (process.env.NODE_ENV !== 'production') globalForDb.sequelize = sequelize;
+globalForDb.sequelize = sequelize;
+
+// Creates missing tables once per process; existing tables and data are left untouched
+export function ensureDb(): Promise<void> {
+  if (!process.env.DB_HOST || !process.env.DB_NAME || !process.env.DB_USER) {
+    return Promise.reject(new Error('Lipsesc variabilele DB_HOST, DB_NAME sau DB_USER din env'));
+  }
+  globalForDb.dbReady ??= sequelize.sync().then(() => undefined);
+  globalForDb.dbReady.catch(() => {
+    globalForDb.dbReady = undefined;
+  });
+  return globalForDb.dbReady;
+}
 
 export default sequelize;

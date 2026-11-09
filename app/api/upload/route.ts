@@ -3,8 +3,9 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import Procedure from '../../../models/Procedure';
+import { Procedure, ensureDb } from '../../../models';
 import { verifyToken } from '../../../lib/auth';
+import { UPLOAD_DIR } from '../../../lib/uploads';
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,17 +47,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory inside public for static serving
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-    } catch {}
+    // Create uploads directory (served by app/uploads/[file]/route.ts)
+    await mkdir(UPLOAD_DIR, { recursive: true });
 
-    // Generate unique filename
+    // Generate unique filename; basename() drops any directory parts sent by the client
     const timestamp = Date.now();
-    const safeName = (file as any).name?.toString?.() || 'document.pdf';
+    const safeName = path.basename(file.name || '') || 'document.pdf';
     const fileName = `${timestamp}_${safeName}`;
-    const diskPath = path.join(uploadsDir, fileName);
+    const diskPath = path.join(UPLOAD_DIR, fileName);
 
     // Save file
     const bytes = await file.arrayBuffer();
@@ -67,6 +65,7 @@ export async function POST(request: NextRequest) {
     const publicPath = `/uploads/${fileName}`;
 
     // Save to database
+    await ensureDb();
     const procedure = await Procedure.create({
       title,
       description,

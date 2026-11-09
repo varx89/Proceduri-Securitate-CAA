@@ -1,8 +1,8 @@
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server';
-import User from '../../../../models/User';
-import { comparePassword, generateToken, setAuthCookie } from '../../../../lib/auth';
+import { User, ensureDb } from '../../../../models';
+import { comparePassword, generateToken, authCookieOptions, AUTH_COOKIE_MAX_AGE } from '../../../../lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    await ensureDb();
 
     // Find user
     const user = await User.findOne({ where: { username } });
@@ -36,7 +38,6 @@ export async function POST(request: NextRequest) {
     // Generate token
     const token = generateToken(user.id);
 
-    // Set cookie
     const response = NextResponse.json(
       { message: 'Autentificare reușită' },
       { status: 200 }
@@ -44,12 +45,8 @@ export async function POST(request: NextRequest) {
 
     // Set HTTP-only cookie
     response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      //secure: process.env.NODE_ENV === 'production',
-	  secure: process.env.SECURE_LOGIN === "true",
-      sameSite: 'strict',
-	  path: '/', // this makes cookie available site-wide
-      maxAge: 10 * 24 * 60 * 60, // 10 days
+      ...authCookieOptions,
+      maxAge: AUTH_COOKIE_MAX_AGE,
     });
 
     return response;

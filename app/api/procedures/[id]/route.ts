@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import Procedure from "../../../../models/Procedure";
+import { Procedure, ensureDb } from "../../../../models";
 import fs from "fs";
-import path from "path";
 import { verifyToken } from "../../../../lib/auth";
+import { resolveUploadPath } from "../../../../lib/uploads";
 
 const isAuthenticated = (request: NextRequest) => {
 	const token = request.cookies.get("auth-token")?.value;
@@ -20,6 +20,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 		const body = await request.json();
 		const { title, description, category } = body as { title?: string; description?: string; category?: "proceduri" | "politici" };
 
+		await ensureDb();
 		const procedure = await Procedure.findByPk(id);
 		if (!procedure) {
 			return NextResponse.json({ message: "Procedura nu a fost găsită" }, { status: 404 });
@@ -48,14 +49,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 		const id = parseInt(resolvedParams.id);
 
 		// Find the procedure
+		await ensureDb();
 		const procedure = await Procedure.findByPk(id);
 		if (!procedure) {
 			return NextResponse.json({ message: "Procedura nu a fost găsită" }, { status: 404 });
 		}
 
-		// Delete the file from public/uploads
-		const diskPath = path.join(process.cwd(), "public", "uploads", procedure.fileName);
-		if (fs.existsSync(diskPath)) {
+		// Delete the file from the uploads dir
+		const diskPath = resolveUploadPath(procedure.fileName);
+		if (diskPath && fs.existsSync(diskPath)) {
 			fs.unlinkSync(diskPath);
 		}
 

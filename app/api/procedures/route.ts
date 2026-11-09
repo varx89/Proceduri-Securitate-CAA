@@ -1,10 +1,11 @@
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server';
-import Procedure from '../../../models/Procedure';
+import { Procedure, ensureDb } from '../../../models';
 
 export async function GET() {
   try {
+    await ensureDb();
     const procedures = await Procedure.findAll({
       order: [['createdAt', 'DESC']],
     });
