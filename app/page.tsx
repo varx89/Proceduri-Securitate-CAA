@@ -171,7 +171,7 @@ export default function Home() {
 			<footer className="footer py-5">
 				<div className="container">
 					<div className="border-top pt-4 text-center text-muted small">
-						<p>&copy; 2025 Compania de Apa Arad SA. Toate drepturile rezervate.</p>
+						<p>&copy; {new Date().getFullYear()} Compania de Apa Arad SA. Toate drepturile rezervate.</p>
 					</div>
 				</div>
 			</footer>
